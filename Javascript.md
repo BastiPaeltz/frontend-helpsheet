@@ -81,9 +81,9 @@
     }else {
         //else
     }
-
+```
 * **switch**
-
+```javascript
     switch (fruit){
         case 'banana':
             //i like bananas
@@ -115,42 +115,42 @@
     }
 ```
 * you can **assign a function to a variable**
-
+```javascript
     var add = function(x,y){
         return x+y;
     }
-
+```
 * **functions can directly be passed to other functions**
 * **function declarations are hoisted** - allows to refer to them even if they are declared later  
-
+```javascript
     function foo(){
         bar();
         function bar{
             return 'bar';
         }
     }
-    
+```
 * **variables** are also hoisted, but assignments performed on them **not**
-
+```javascript
     function foo(){
         bar(); //error
         var bar = function(){
             return bar;
         }
     }
-
+```
 ### arguments
 
 * you can call **any function** with an **arbitrary amount of arguments** -> no error
 * they will be made available in special variable `arguments.arguments`
-
+```javascript
     function f(){ return arguments;}
     var args = f(1, 2, 3);
     args.length --> 3
     args[0] --> 1
-
+```
 * **too many** arguments will be ignored (except by `arguments`), too **few** arguments produces:
-
+```javascript
     function(x,y){
         console.log(x, y);
     }
@@ -158,14 +158,14 @@
     --> 'hallo' undefined
     f()
     --> undefined undefined
-
+```
 * optional arguments assigned with `x = x || 0;`
 * if a **fixed amount of arguments** is needed, use `arguments.length`
 
 * converting `arguments` to **Array** -> method described in **Speaking Javascript p. 21** 
 
 ## Exception Handling
-
+```javascript
     function getPerson(id){
         if (id < 0) {
             throw new Error('ID must not be negative ' + id);
@@ -185,18 +185,18 @@
         });
         return result;
     }
-
+```
 ### Strict mode
 
 * enables more warnings and makes JS a cleaner language
 * type as first line in your script `'use strict';`
 
 ## variable Scopes and Closures
-
+```javascript
     var x;
     x -> undefined
     y -> ReferenceError, y is not defined
-
+```
 * initialize and declare in **single statement** possible with 
 `var x = 1, y = 2, z = 3;`
 * recommended: **1 statement per line**
@@ -210,17 +210,18 @@
 
 * declaration is **moved** to beginning of function, **assignments not**
 * nice example for understanding:
+```javascript   
     function foo(){
         console.log(tmp); --> undefined -- NOT ReferenceError, means variable is recognized
         if (false){
             tmp = 3;
         }
     }
-
+```
 ### Closures
 
 * each function stays **connected to variables of functions that surround it**, even after it leaves scope of creation
-
+```javascript
     function createIncrementor(start){
         return function () {
             start++;
@@ -233,6 +234,7 @@
     --> inc();
     --> 7
     ...
+```
 * A closure is a function plus the connection to the variables of its surrounding scopes -> `createIncrementor` returns a *closure*.
 * Ja, es ist schwer zu verstehen!
 
@@ -242,11 +244,11 @@
   * pattern for this: **IIFE - immediately invoked function expression**
   * a function expression that is immediately called after definition
   * a **new scope inside the function** -> `tmp` doesn't get global
-
+```javascript
     (function () { // open IIFE
         var tmp = 3; // not a global var
     }()); // close IIFE
-
+```
 * **use case** - inadvertent sharing via **closures**
 * see **Speaking Javascript p. 24** 
 
@@ -255,23 +257,23 @@
 * **single objects** - objects have **properties** 
 * consider an object as a set of properties, where each property is a **key-value pair**
   * key is a String, value is any JS value
-
+```javascript
     var jane = {
         name : 'Jane',
         describe: function (){
            return 'Person named'+this.name;
         }
     };
-
+```
 * preceding object has properites `name` and `describe`
 * you can **get and set** properties as well as create new ones
-
+```javascript
     jane.name; //get
     jane.name = 'Jürgen' //set
     jane.husband = 'Rainer';
     jane.describe()
     --> 'A person named Jürgen.'
-
+```
 * check **existency** of property with `in`, e.g. `'name' in jane` -> true
 * not existing property returns `undefined`, `jane.foo !== undefined` -> false
 * **remove property** with `delete`, `delete jane.husband`
@@ -288,7 +290,7 @@
 ## Functions inside a method
 
 * every function has it'S own `this`, this is inconvenient for functions inside methods, example:
-
+```javascript
     var jane = {
         name : 'Jane',
         friends : ['Tarzan', 'Cheetah'],
@@ -298,17 +300,17 @@
             })
         }
     }
-    --> sayHiToFriends() produces: 'TypeError cannot read property 'name' of undefined
+    sayHiToFriends() produces: TypeError cannot read property name of undefined
+```
 
 * one solution might be: use **second parameter of forEach** -> `this.friends.forEach(function (friend){sayHi();}, this);`
-
 
 ## Constructors - Factories for objects
 
 * introduces **inheritance** 
 * functions become **constructors** when invoked via `new` 
 * by convention : name starts with **Capital letters**
-
+```javascript
     function Point(x,y) {
         this.x = x;
         this.y = y;
@@ -317,6 +319,7 @@
     Point.prototype.dist = function () {
         return Math.sqrt(this.x*this.x+this.y*this.y);
     };
+```
 * **prototype** contains an object with the methods
 * invoke with `var point = new Point(1,1);`
 * `point.x;` --> 1, `point.dist();` --> 2
@@ -347,16 +350,18 @@
 
 * **two most important** : `forEach` and `map`
 * forEach hands current element and its index to a function:
+```javascript
     [1, 2, 3].forEach(
         function (elem, index){
              console.log(index + ". " + elem);
     });
     --> returns: 0.1 , 1.2 , 2.3
-
+```
 * map **creates new array** by **applying a function** to **each element** of an existing array
+```javascript
     [1, 2, 3].map(function(x){ return x + 9;})
     --> returns following array: [10, 11, 12]
-
+```
 ## RegEx
 
 * delimited by **slashes** -> `/^abc$/`
