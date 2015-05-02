@@ -30,7 +30,7 @@
 
 ## undefined and null
 
-* `ùndefined` means **no value**
+* `undefined` means **no value**
 * `var foo` , `function f(x) {return x}`, `obj.foo` evaluates to **undefined** (if f() gets called and foo doesn't exist or isn't initialized)
 * `null` means **no object**
 * **undefined and null have NO properties**
@@ -73,7 +73,7 @@
 ## Conditionals
 
 * **if**
-
+```javascript
     if (myvar === 0 ){
         //then
     }else if(myvar > 1){
@@ -94,26 +94,26 @@
         default:
             //go here if fruit aint apple or banana
     }
-
+```
 ## loops
-
+```javascript
 * **for**
  
     for (var i=0; i < arr.length; i++){
         //do stuff
     } 
-
+```
 * **while** and **do-while**
   * same as in Java
 
 * in all loops: `break` leaves loop `continue` starts new iteration
 
 ## Functions
-
+```javascript
     function add(x, y){
         return x+y;
     }
-
+```
 * you can **assign a function to a variable**
 
     var add = function(x,y){
