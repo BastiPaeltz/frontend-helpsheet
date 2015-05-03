@@ -96,9 +96,9 @@
     }
 ```
 ## loops
-```javascript
+
 * **for**
- 
+```javascript 
     for (var i=0; i < arr.length; i++){
         //do stuff
     } 
