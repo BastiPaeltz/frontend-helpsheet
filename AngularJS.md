@@ -516,3 +516,365 @@ someModule.controller('MyController', MyController);
 <img src="http://www11.pic-upload.de/03.05.15/l6n34jfslv2.png">
 
 
+## Filters
+
+* formats value of expression for **display to the user**
+* can be used in **view templates, controllers or services**
+
+### filters in view templates
+
+* can be **applied to expressions** in view templates like following
+  * `{{ expression | filter }}`
+  * *E.g. the markup {{ 12 | currency }} formats the number 12 as a currency using the currency filter.*
+* chanining possible:
+  * `{{ expression | filter1 | filter2 | ... }}`
+* filters **may have arguments**
+  * `{{ expression | filter:argument1:argument2:... }}`
+  * *E.g. the markup {{ 1234 | number:2 }} formats the number 1234 with 2 decimal points using the number filter*
+
+### Using filters in controllers, services and directives
+
+* used via injecting a dependency with name `<filterName>Filter`, e.g. `numberFilter`
+* the injected argument is a function that takes the **value to format as first argument** and **filter parameters from second parameter on**
+* example
+```javascript
+
+angular.module('FilterInControllerModule', []).
+controller('FilterController', ['filterFilter', function(filterFilter) {
+    // filterFilter is dependency injected into the FilterController
+  this.array = [
+    {name: 'Tobias'},
+    {name: 'Jeff'},
+    {name: 'Brian'},
+    {name: 'Igor'},
+    {name: 'James'},
+    {name: 'Brad'}
+  ];
+  // filters array - only entries with 'a' in it go into filteredArray
+  this.filteredArray = filterFilter(this.array, 'a');
+}]);
+```
+
+### Creating custom filters
+
+* register new **filter factory** with Module
+  * should **return a filter function which takes input as **first parameter**
+  * example:
+ 
+```javascript
+angular.module('myReverseFilterApp', [])
+.filter('reverse', function() {
+  return function(input, uppercase) {
+    input = input || '';
+    var out = "";
+    for (var i = 0; i < input.length; i++) {
+      out = input.charAt(i) + out;
+    }
+    // conditional based on optional argument
+    if (uppercase) {
+      out = out.toUpperCase();
+    }
+    return out;
+  };
+})
+.controller('MyController', ['$scope', function($scope) {
+  $scope.greeting = 'hello';
+}]);
+```
+
+## Forms
+
+* *Controls (`input`, `select`, `textarea`) are ways for a user to enter data. A Form is a collection of controls for the purpose of grouping related controls together.* 
+* client side verification of forms
+
+### Simple forms
+
+* **key directive is `ngModel` - it provides two-way data binding**
+* it **synchronizes model with the view and vice versa.** 
+* example:
+
+```html
+<div ng-controller="ExampleController">
+  <form novalidate class="simple-form">
+    Name: <input type="text" ng-model="user.name" /><br />
+    E-mail: <input type="email" ng-model="user.email" /><br />
+    Gender: <input type="radio" ng-model="user.gender" value="male" />male
+    <input type="radio" ng-model="user.gender" value="female" />female<br />
+    <input type="button" ng-click="reset()" value="Reset" />
+    <input type="submit" ng-click="update(user)" value="Save" />
+  </form>
+  <pre>form = {{user | json}}</pre>
+  <pre>master = {{master | json}}</pre>
+</div>
+
+<script>
+  angular.module('formExample', [])
+    .controller('ExampleController', ['$scope', function($scope) {
+      $scope.master = {};
+
+      $scope.update = function(user) {
+        //copies user values from template to master
+
+        $scope.master = angular.copy(user);
+      };
+
+      $scope.reset = function() {
+        //copies master property to `user` which triggers updating the view 
+        $scope.user = angular.copy($scope.master);
+      };
+
+      $scope.reset();
+    }]);
+</script>
+```
+
+### Using CSS classes
+
+* for styling forms, angular provides following **CSS classes**:
+```
+ng-valid: the model is valid
+ng-invalid: the model is invalid
+ng-valid-[key]: for each valid key added by $setValidity
+ng-invalid-[key]: for each invalid key added by $setValidity
+ng-pristine: the control hasn't been interacted with yet
+ng-dirty: the control has been interacted with
+ng-touched: the control has been blurred
+ng-untouched: the control hasn't been blurred
+ng-pending: any $asyncValidators are unfulfilled
+```
+
+### Binding to form and control state
+
+```html
+<div ng-controller="ExampleController">
+  <form name="form" class="css-form" novalidate>
+    Name:
+    <input type="text" ng-model="user.name" name="uName" required="" />
+    <br />
+    <div ng-show="form.$submitted || form.uName.$touched`"> 
+    <!-- if form got submitted, check for errors. If not, check if it got touched. If yes, check for errors -->
+    `      <div ng-show="form.uName.$error.required">Tell us your name.</div>
+    </div>
+
+    E-mail:
+    <input type="email" ng-model="user.email" name="uEmail" required="" />
+    <br />
+    <div ng-show="form.$submitted || form.uEmail.$touched">
+      <span ng-show="form.uEmail.$error.required">Tell us your email.</span>
+      <span ng-show="form.uEmail.$error.email">This is not a valid email.</span>
+    </div>
+
+    Gender:
+    <input type="radio" ng-model="user.gender" value="male" />male
+    <input type="radio" ng-model="user.gender" value="female" />female
+    <br />
+    <input type="checkbox" ng-model="user.agree" name="userAgree" required="" />
+
+    I agree:
+    <input ng-show="user.agree" type="text" ng-model="user.agreeSign" required="" />
+    <br />
+    <div ng-show="form.$submitted || form.userAgree.$touched">
+      <div ng-show="!user.agree || !user.agreeSign">Please agree and sign.</div>
+    </div>
+
+    <input type="button" ng-click="reset(form)" value="Reset" />
+    <input type="submit" ng-click="update(user)" value="Save" />
+  </form>
+</div>
+
+```
+
+### Custom model update triggers
+
+*By default, any change to the content will trigger a model update and form validation. You can override this behavior using the ngModelOptions directive to bind only to specified list of events.*
+
+```html
+
+<div ng-controller="ExampleController">
+  <form>
+    Name:
+    <input type="text" ng-model="user.name" ng-model-options="{ updateOn: 'blur' }" /><br />
+    <!-- IMPORTANT PART - ng-model-options 
+    -->
+    Other data:
+    <input type="text" ng-model="user.data" /><br />
+  </form>
+  <pre>username = "{{user.name}}"</pre>
+  <pre>userdata = "{{user.data}}"</pre>
+</div>
+```
+
+## Directives
+
+* markers on **DOM element** which attach **special behaviour to it**
+* examples `ngBind`, `ngModel`, `ngClass`
+
+### ng-app
+
+* starts an AngularJS application
+
+### ng-show
+
+* shows or hides HTML elements
+
+### ng-model
+
+* defines the model to be used
+
+### ng-repeat
+
+* repeats HTML elements for each item in a collection
+
+### ng-input
+
+* when used together with `ng-model` provides data binding, input state control and validation
+
+### ng-form
+
+* see Forms section
+
+### ng-class
+
+* set CSS classes on elements
+
+### ng-controller
+
+* attaches a controller class to view, see Controller section
+
+### ng-click
+
+* custom behaviour to element that is clicked
+
+### ng-switch
+
+* conditionally swap DOM structure based on scope expression
+
+### ng-view
+
+* complements the `$route` service by rendering the current layout in the main template (usually **index.html**) 
+
+
+## Animations
+
+* angular provies animation hooks for common directives like `ng-repeat`
+* *saved for later* 
+
+## Modules
+
+* container for different parts of your app (**controllers, services, filters, directives**)
+* example in a hurry:
+```html
+<div ng-app="myApp">
+  <div>
+    {{ 'World' | greet }}
+  </div>
+</div>
+```
+
+* empty array in `var myAppModule = angular.module('myApp', []);` means that this app depends on nothing else
+
+### Recommended setup
+
+* A module for each feature
+* A module for each reusable component (especially directives and filters)
+* an application level module which depends on the above modules and contains any initialization code.
+
+### Module loading & dependencies 
+
+* consists of 2 kind of blocks
+* **configuration and run blocks**
+1. Configuration blocks - get executed during the **provider registrations** and configuration phase. Only providers and constants can be injected into configuration blocks. This is to prevent accidental instantiation of services before they have been fully configured.  
+2. Run blocks - get executed **after the injector is created** and are used to kickstart the application. Only instances and constants can be injected into run blocks. This is to prevent further system configuration during application run time.
+
+```javascript
+angular.module('myModule', []).
+config(function(injectables) { // provider-injector
+  // This is an example of config block.
+  // You can have as many of these as you want.
+  // You can only inject Providers (not instances)
+  // into config blocks.
+}).
+run(function(injectables) { // instance-injector
+  // This is an example of a run block.
+  // You can have as many of these as you want.
+  // You can only inject instances (not Providers)
+  // into run blocks
+});
+```
+
+**Beware that using angular.module('myModule', []) will create the module myModule and overwrite any existing module named myModule. Use angular.module('myModule') to retrieve an existing module.**
+
+### Unit testing
+
+```javascript
+
+angular.module('greetMod', []).
+// alert service registered
+factory('alert', function($window) {
+  return function(text) {
+    $window.alert(text);
+  }
+}).
+// shortcut -> registers a 'static' salutation dervice which returns 'Hello'
+//as its value service 
+value('salutation', 'Hello').
+// which produces a "Hello" + name alert in the greet service
+factory('greet', function(alert, salutation) {
+  return function(name) {
+    alert(salutation + ' ' + name + '!');
+  }
+});
+
+```
+
+The corresponding unit test:
+
+```javascript
+
+describe('myApp', function() {
+  // load application module (`greetMod`) then load a special
+  // test module which overrides `$window` with a mock version,
+  // so that calling `window.alert()` will not block the test
+  // runner with a real alert box.
+  beforeEach(module('greetMod', function($provide) {
+    $provide.value('$window', {
+      alert: jasmine.createSpy('alert')
+    });
+  }));
+
+  // inject() will create the injector and inject the `greet` and
+  // `$window` into the tests.
+  it('should alert on $window', inject(function(greet, $window) {
+    greet('World');
+    expect($window.alert).toHaveBeenCalledWith('Hello World!');
+  }));
+
+  // this is another way of overriding configuration in the
+  // tests using inline `module` and `inject` methods.
+  it('should alert using the alert service', function() {
+    var alertSpy = jasmine.createSpy('alert');
+    module(function($provide) {
+      $provide.value('alert', alertSpy);
+    });
+    inject(function(greet) {
+      greet('World');
+      expect(alertSpy).toHaveBeenCalledWith('Hello World!');
+    });
+  });
+});
+
+```
+
+
+
+
+
+```
+
+
+
+## Providers
+
+## Unit Test
+
+## End to End test
