@@ -296,3 +296,173 @@ it('should clear messages after alert', function() {
 ```
 
 ## Scopes
+
+* scope is an **object** that refers to **application model**
+* execution context for **expressions**
+* arranged **hierarchical**, which mimic DOM structure
+* scopes can **watch expressions** and **propagate events**
+
+
+### scope characteristics
+
+* scopes provide APIs to observe **model mutations** (`$watch`)
+* scopes provide APIs to **propagate model changes** through system into view from outside the angular realm (controllers, services, event handlers) - (`$apply`)
+* scopes can be nested
+  * nested scopes are either **child scopes** or **isolate scopes**
+  * child scope **inherits** properties from parent scope
+  * isolate scope does **not**
+* scopes provide context against which **expressions are evaluated**
+* e.g. `{{username}}` is meaningless unless evaluated against specific scope which defines `ùsername` property
+
+### Scope as data model
+
+* scope is **glue between controller and view** 
+* **You can think of the scope and its properties as the data which is used to render the view.** 
+* testing excerpt which uses example from <a href="https://docs.angularjs.org/guide/scope">Angular scope guide</a>
+
+```javascript
+
+it('should say hello', function() {
+  var scopeMock = {};
+  var cntl = new MyController(scopeMock);
+
+  // Assert that username is pre-filled
+  expect(scopeMock.username).toEqual('World');
+
+  // Assert that we read new username and greet
+  scopeMock.username = 'angular';
+  scopeMock.sayHello();
+  expect(scopeMock.greeting).toEqual('Hello angular!');
+});
+```
+
+### Scope hierarchies
+
+* each angular application has exactly one **rootScope**
+* Angular searches expressions first into local scope and then works its way up the hierarchy (e.g. childScope -> ParentScope -> rootScope)
+
+### scope event propagation
+
+* event can be **broadcasted to scope children** or **emitted to scope parents**
+* both actions also propagate the **callers scope**
+
+### scope life cycle
+
+* to properly process model modification the execution has to enter Angular execution context using the `$apply` method.
+* after evaluating the expression, `$apply` performs a `$digest` 
+* in digest phase, the scope examines all `$watch` expressions and compares them with previous values
+
+1. creation
+  * root scope is created during application bootstrap by `$injector` 
+2. watcher registration
+  * directives register watcher on scopes 
+3. model mutation
+  * For mutations to be properly observed, you should make them only within the `scope.$apply()`.
+4. ... nachlesen in URL oben ... viel stuff
+
+### Scopes and directives
+
+
+* *Observing directives, such as double-curly expressions {{expression}}, register listeners using the $watch() method. This type of directive needs to be notified whenever the expression changes so that it can update the view.*
+
+* *Listener directives, such as ng-click, register a listener with the DOM. When the DOM listener fires, the directive executes the associated expression and updates the view using the $apply() method.*
+
+### controllers and scopes
+
+* Scopes and controllers interact with each other in the following situations:
+
+* Controllers use scopes to expose controller methods to templates (see ng-controller).
+
+* Controllers define methods (behavior) that can mutate the model (properties on the scope).
+
+* Controllers may register watches on the model. These watches execute immediately after the controller behavior executes.
+
+## Dependency injection
+
+* can be used when defining components or when providing `run` or `config` blocks for a module
+
+* *Components such as **services, directives, filters, and animations** are defined by an **injectable factory method or constructor function**. These components can be injected with "service" and "value" components as dependencies.*
+
+* *Controllers are defined by a **constructor function, which can be injected with any of the "service" and "value" components as dependencies**, but they can also be provided with special dependencies. See Controllers below for a list of these special dependencies.*
+
+* *The run method **accepts a function, which can be injected with "service", "value" and "constant" components as dependencies**. Note that you cannot inject "providers" into run blocks.*
+
+* *The config method **accepts a function, which can be injected with "provider" and "constant" components as dependencies**. Note that you cannot inject "service" or "value" components into configuration.*
+
+### Factory methods
+
+* **define directives, services or filters with factory function**
+* recommended way of declaring factories
+
+```javascript
+
+angular.module('myModule', [])
+.factory('serviceId', ['depService', function(depService) {
+  // ...
+}])
+.directive('directiveName', ['depService', function(depService) {
+  // ...
+}])
+.filter('filterName', ['depService', function(depService) {
+  // ...
+}]);
+```
+
+### Module methods
+
+* we can specify functions to run at **config or run time** for a module by calling `config` or `run`. They are dependency injectable too.
+
+```javascript
+
+angular.module('myModule', [])
+.config(['depProvider', function(depProvider) {
+  // ...
+}])
+.run(['depService', function(depService) {
+  // ...
+}]);
+```
+
+### Controllers
+
+* Unlike services, there can be **many instances of the same type of controller** in an application.
+* additional dependencies for controllers: `$scope`
+  * other components (like services) only have access to `$rootScope`
+  * *resolves: If a controller is instantiated as part of a route, then any values that are resolved as part of the route are made available for injection into the controller.*
+
+* recommended way of declaring Controllers is using the array notation:
+
+```javascript
+someModule.controller('MyController', ['$scope', 'dep1', 'dep2', function($scope, dep1, dep2) {
+  ...
+  $scope.aMethod = function() {
+    ...
+  }
+  ...
+}]);
+```
+
+### Dependency annotation
+
+*  Using the **inline array annotation** (preferred) or Using the `$inject` **property annotation**
+
+* `$inject` property annotation
+
+```javascript
+
+var MyController = function($scope, greeter) {
+  // ...
+}
+MyController.$inject = ['$scope', 'greeter'];
+someModule.controller('MyController', MyController);
+```
+
+### Using strict dependency injection
+
+* use `ng-strict-di` directive 
+* use tool **ng-annotate**
+
+### Why dependency injection
+
+* Because it's cool 
+
