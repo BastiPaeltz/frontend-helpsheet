@@ -15,10 +15,18 @@
 
 *MVC is popular because it isolates the application logic from the user interface layer and supports separation of concerns. The controller receives all requests for the application and then works with the model to prepare any data needed by the view. The view then uses the data prepared by the controller to generate a final presentable response.*
 
+
 ## best practices
 
 * only directives should access DOM
-* 
+* put angular scripts at bottom of page
+* controllers end with 'Controller', services end with 'Service'
+* controllers are in UpperCamelCase, apps are in lowerCamelCase
+* use $cacheFactory for session based cache
+* use ngBind instead of raw expressions with `{{}}`
+* use `ng-src` when loading dynamic soure
+* use `resolve` for routing to resolve dependencies before view is shown
+*  
 
 ## Data binding
 
@@ -866,15 +874,225 @@ describe('myApp', function() {
 ```
 
 
+## Providers
+
+### Value recipe
+
+* simplest recipe 
+
+```javascript
+var myApp = angular.module('myApp', []);
+myApp.value('clientId', 'a12345654321x');
+```
+
+### Factory recipe
+
+* ability to use **othere dependencies**
+* service initialization
+* delayed/lazy initialization
+
+```javascript
+myApp.factory('apiToken', ['clientId', function apiTokenFactory(clientId) {
+  var encrypt = function(data1, data2) {
+    // NSA-proof encryption algorithm:
+    return (data1 + ':' + data2).toUpperCase();
+  };
+
+  var secret = window.localStorage.getItem('myApp.secret');
+  var apiToken = encrypt(clientId, secret);
+
+  return apiToken;
+}]);
+```
+
+### Service recipe
+
+* returns `new` instance 
+```javascript
+
+function UnicornLauncher(apiToken) {
+
+  this.launchedCount = 0;
+  this.launch = function() {
+    // Make a request to the remote API and include the apiToken
+    ...
+    this.launchedCount++;
+  }
+}
+
+//register service with - apiToken is dependency for our UnicornLauncher
+myApp.service('unicornLauncherService', ["apiToken", UnicornLauncher]);
+```
+
+### Provider recipe
+
+* most of time overkill
+
+### Constant recipe
+
+* you can specify constants as well
+
+## Unit Test
 
 
+### Testing a controller
+
+```javascript
+angular.module('app', [])
+.controller('PasswordController', function PasswordController($scope) {
+  $scope.password = '';
+  $scope.grade = function() {
+    var size = $scope.password.length;
+    if (size > 8) {
+      $scope.strength = 'strong';
+    } else if (size > 3) {
+      $scope.strength = 'medium';
+    } else {
+      $scope.strength = 'weak';
+    }
+  };
+});
+```
+
+* Because controllers are **not made available** in the public scope, we need to use `angular.mack.inject` to inject controller first
+* the corresponding test:
+
+```javascript
+
+describe('PasswordController', function() {
+  beforeEach(module('app'));
+
+  var $controller;
+
+  beforeEach(inject(function(_$controller_){
+    // The injector unwraps the underscores (_) from around the parameter names when matching
+    $controller = _$controller_;
+  }));
+
+  describe('$scope.grade', function() {
+    it('sets the strength to "strong" if the password length is >8 chars', function() {
+      var $scope = {};
+      var controller = $controller('PasswordController', { $scope: $scope });
+      $scope.password = 'longerthaneightchars';
+      $scope.grade();
+      expect($scope.strength).toEqual('strong');
+    });
+  });
+});
+
+```
+
+* Testing both scenarios (password = strong and password = weak) would result in something like this:
+
+```javascript
+
+describe('PasswordController', function() {
+  beforeEach(module('app'));
+
+  var $controller;
+
+  beforeEach(inject(function(_$controller_){
+    // The injector unwraps the underscores (_) from around the parameter names when matching
+    $controller = _$controller_;
+  }));
+
+  describe('$scope.grade', function() {
+    var $scope, controller;
+
+    // before each used to declare a scope for both tests and mock up the controller once
+    beforeEach(function() {
+      $scope = {};
+      controller = $controller('PasswordController', { $scope: $scope });
+    });
+
+    it('sets the strength to "strong" if the password length is >8 chars', function() {
+      $scope.password = 'longerthaneightchars';
+      $scope.grade();
+      expect($scope.strength).toEqual('strong');
+    });
+
+    it('sets the strength to "weak" if the password length <3 chars', function() {
+      $scope.password = 'a';
+      $scope.grade();
+      expect($scope.strength).toEqual('weak');
+    });
+  });
+});
+
+```
+
+### Testing filters
+
+* similar mock up to controllers
+```javascript
+
+myModule.filter('length', function() {
+  return function(text) {
+    return ('' + (text || '')).length;
+  }
+});
+
+describe('length filter', function() {
+
+  beforeEach(inject(function(_$filter_){
+    $filter= _$filter_;
+  }));
+
+  it('returns 0 when given null', function() {
+    var length = $filter('length');
+    expect(length(null)).toEqual(0);
+  });
+
+  it('returns the correct value when given a string of chars', function() {
+    var length = $filter('length');
+    expect(length('abc')).toEqual(3);
+  });
+});
+
+```
+
+### Testing directives
+
+* complicated - see if you really want to write own directive
+
+## End-to-End testing
+
+* use **Protractor**
+* example:
+```javascript
+
+describe('TODO list', function() {
+  it('should filter results', function() {
+
+    // Find the element with ng-model="user" and type "jacksparrow" into it
+    element(by.model('user')).sendKeys('jacksparrow');
+
+    // Find the first (and only) button on the page and click it
+    element(by.css(':button')).click();
+
+    // Verify that there are 10 tasks
+    expect(element.all(by.repeater('task in tasks')).count()).toEqual(10);
+
+    // Enter 'groceries' into the element with ng-model="filterText"
+    element(by.model('filterText')).sendKeys('groceries');
+
+    // Verify that now there is only one item in the task list
+    expect(element.all(by.repeater('task in tasks')).count()).toEqual(1);
+  });
+});
 
 ```
 
 
+## Using `$location`
 
-## Providers
-
-## Unit Test
-
-## End to End test
+* change URL with $location
+**The $location service:**
+* Exposes the current URL in the browser address bar, so you can
+  * watch and observe the URL.
+  * Change the URL.
+* Maintains synchronization between itself and the browser's URL when the user
+  * Changes the address in the browser's address bar.
+  * Clicks the back or forward button in the browser (or clicks a History link).
+  * Clicks on a link in the page.
+* Represents the URL object as a set of methods (protocol, host, port, path, search, hash).
