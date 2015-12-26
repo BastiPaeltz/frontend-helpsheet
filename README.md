@@ -1,18 +1,6 @@
 # helpsheet for frontend development components
 
-includes `AngularJS`, `Jasmine`, `Javscript`, `CSS`, `HTML`.
+includes `AngularJS`, `Jasmine`, `Javscript` (for now)
 
-## AngularJS
-
-
-
-## Jasmine
-
-
-## Javascript
-
-## CSS 
-
-## HTML 
 
 
