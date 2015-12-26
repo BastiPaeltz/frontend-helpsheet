@@ -521,8 +521,6 @@ someModule.controller('MyController', MyController);
 * an expression starting with `::` will **stop recalculating** once they are stable
 * example : `<p id="one-time-binding-example">One time binding: {{::name}}</p>`
 
-<img src="http://www11.pic-upload.de/03.05.15/l6n34jfslv2.png">
-
 
 ## Filters
 
